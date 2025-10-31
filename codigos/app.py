@@ -261,7 +261,7 @@ class Interface:
                         st.altair_chart(grafico, use_container_width=True)
 
 
-# ---> PONTO DE ENTRADA DO PROGRAMA
+# ---> Início da aplicação
 if __name__ == "__main__":
     app = Interface()
     app.configurar_interface()

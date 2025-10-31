@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 # ---> Classe de processamento de dados
 class Processamento:
     def __init__(self):
@@ -17,8 +16,10 @@ class Processamento:
 
     # ---> Método para transformar gastos em parcelas
     def _parcelas(self, df_gastos_limpo):
+        # ---> Lista para armazenar as novas linhas de fatura
         novas_linhas_fatura = []
-        limite_cliente = self.base_limites.set_index("cliente")["limite"].to_dict()
+        # ---> Cria um dicionário para buscar limites e vencimentos por cliente
+        procurar_clientes = self.base_limites.set_index("cliente").to_dict('index')
 
         # ---> Itera por cada transação (compra)
         for row in df_gastos_limpo.itertuples():
@@ -28,18 +29,38 @@ class Processamento:
             num_parcelas = row.num_parcelas
             data_compra = row.dt_operacao
 
+            # ---> Busca os dados (limite E vencimento) do nosso dicionário
+            info_cliente = procurar_clientes.get(cliente, {}) # Pega o dict do cliente
+            limite_do_cliente = info_cliente.get('limite', 0) # Pega o limite
+            vencimento_do_cliente = info_cliente.get('dt_vencimento', None) # Pega a data
+
+            # ---> Define o 0 para a parcela cair no mês da compra
+            mes_offset = 0
+
+            # ---> Verificamos se temos uma data de vencimento para este cliente
+            if vencimento_do_cliente:
+                # ---> Comparamos o DIA da compra com o DIA do vencimento
+                dia_da_compra = data_compra.day
+                dia_do_vencimento = vencimento_do_cliente.day
+
+                # ---> Se a compra for depois do dia do vencimento
+                if dia_da_compra > dia_do_vencimento:
+                    # ---> A primeira parcela vai para o próximo mês.
+                    mes_offset = 1
+
             # ---> Calcula o valor de cada parcela
             valor_parcela = valor_total_compra / num_parcelas
 
             # ---> Cria uma nova linha para cada parcela
             for i in range(num_parcelas):
-                data_fatura_parcela = data_compra + pd.DateOffset(months=i)
+                # ---> Usamos o 'mes_offset' para calcular a data correta
+                data_fatura_parcela = data_compra + pd.DateOffset(months=i + mes_offset)
                 mes_fatura = data_fatura_parcela.strftime("%b/%Y").lower()
 
                 novas_linhas_fatura.append(
                     {
                         "nm_cliente": cliente,
-                        "limite": limite_cliente.get(cliente, 0),
+                        "limite": limite_do_cliente, 
                         "valor_parcela": valor_parcela,
                         "dt_fatura": data_fatura_parcela,
                         "mes_fatura": mes_fatura,
@@ -47,11 +68,12 @@ class Processamento:
                         "total_parcelas": num_parcelas,
                     }
                 )
+                
         return pd.DataFrame(novas_linhas_fatura)
 
     # ---> Método para limpar dados
     def limpar_dados(self):
-        # --- Tratando a base_gastos
+        # ---> Tratando a base_gastos
         if not self.base_gastos.empty:
             self.base_gastos["nm_cliente"] = self.base_gastos["nm_cliente"].str.lower()
             self.base_gastos["valor_operacao"] = (
@@ -79,15 +101,15 @@ class Processamento:
                 if isinstance(nome_str, str):
                     # ---> Se tiver vírgula (ex: "Gomes, Paulo")
                     if "," in nome_str:
-                        # Separa em ["Gomes", " Paulo"]
+                        # ---> Separa em ["Gomes", " Paulo"]
                         partes = nome_str.split(",")
-                        # Inverte a ordem [::-1] -> [" Paulo", "Gomes"]
-                        # Tira os espaços (strip) -> ["Paulo", "Gomes"]
+                        # ---> Inverte a ordem [::-1] -> [" Paulo", "Gomes"]
+                        # ---> Tira os espaços (strip) -> ["Paulo", "Gomes"]
                         partes_reversas = [p.strip() for p in partes[::-1]]
-                        # Junta com espaço -> "Paulo Gomes"
+                        # ---> Junta com espaço -> "Paulo Gomes"
                         return " ".join(partes_reversas)
 
-                    # Se não tiver vírgula, só remove espaços extras
+                    # ---> Se não tiver vírgula, só remove espaços extras
                     return nome_str.strip()
                 return nome_str
 
@@ -133,6 +155,3 @@ class Processamento:
             df_filtrado = df_filtrado[df_filtrado["dt_fatura"] <= data_final]
 
         return df_filtrado
-
-
-# ---> Fim da classe Processamento
