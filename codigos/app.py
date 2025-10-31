@@ -1,15 +1,16 @@
 # ---> Imports necessários
-from processamento import Processamento  
+from processamento import Processamento
 import streamlit as st
 import pandas as pd
-import altair as alt 
+import altair as alt
+
 
 # ---> Classe Interface - Responsável pela UI do Streamlit
 class Interface:
     # ---> Construtor para inicializar dados e processador
     def __init__(self):
         self.processador = Processamento()
-        
+
         # ---> self.base_gastos e com a tabela de parcelas
         self.base_gastos, self.base_limites = self.processador.limpar_dados()
 
@@ -111,7 +112,6 @@ class Interface:
             .reset_index()
         )
 
-
         # ---> Criação do Gráfico
         base = alt.Chart(df_grafico).encode(
             x=alt.X("mes_fatura", sort=None, title="Mês da Fatura")
@@ -194,7 +194,7 @@ class Interface:
                 type="secondary",
                 help="Clique para limpar os filtros aplicados.",
                 on_click=self.limpar_dados_sessao,
-            )            
+            )
 
         # ---> Mensagens de Status
         if "filtro_aplicado" in st.session_state:
@@ -229,7 +229,7 @@ class Interface:
                             index=[
                                 "nm_cliente",
                                 "limite",
-                            ],  
+                            ],
                             columns="mes_fatura",
                             values="valor_parcela",
                             aggfunc="sum",
