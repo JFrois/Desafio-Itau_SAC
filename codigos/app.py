@@ -171,7 +171,7 @@ class Interface:
                 )
 
         # ---> Botões de ação em duas colunas
-        col1_btn, col2_btn = st.columns(2)
+        col1_btn = st.columns(1)[0]
         st.markdown("---")
 
         with col1_btn:
@@ -188,15 +188,13 @@ class Interface:
                 help="Clique para buscar os dados filtrados.",
                 on_click=self.filtros_aplicados,
             )
-
-        with col2_btn:
             st.button(
                 "Limpar filtros",
                 key="botao_limpar",
                 type="secondary",
                 help="Clique para limpar os filtros aplicados.",
                 on_click=self.limpar_dados_sessao,
-            )
+            )            
 
         # ---> Mensagens de Status
         if "filtro_aplicado" in st.session_state:
