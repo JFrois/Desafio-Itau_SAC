@@ -1231,3 +1231,49 @@ WHERE
 	G.DT_OPERACAO BETWEEN '2022-01-01' AND '2022-01-10' --- Aqui acontece a alteracao para o que queremos, para trazer valores iguais ou maiores
 ORDER BY
 	G.NM_CLIENTE;
+
+--- Selecao top 5 gastos por cliente
+SELECT
+	G.NM_CLIENTE,
+	SUM(G.VALOR_OPERACAO) AS TOTAL_GASTO,
+	L.LIMITE
+FROM
+	GASTOS G
+	INNER JOIN LIMITES L ON G.NM_CLIENTE = L.CLIENTE
+GROUP BY
+	G.NM_CLIENTE,
+	L.LIMITE
+ORDER BY
+	TOTAL_GASTO DESC -- Ordena pela soma total, não por um valor individual
+LIMIT
+	5;
+
+--- Selecao top 5 meses mais gastos
+SELECT
+	EXTRACT(
+		DAY
+		FROM
+			G.DT_OPERACAO
+	) AS DIA,
+	EXTRACT(
+		YEAR
+		FROM
+			G.DT_OPERACAO
+	) AS ANO,
+	EXTRACT(
+		MONTH
+		FROM
+			G.DT_OPERACAO
+	) AS MES,
+	SUM(G.VALOR_OPERACAO) AS TOTAL_GASTO
+FROM
+	GASTOS G
+	-- Não precisamos da tabela LIMITES para esta pergunta
+GROUP BY
+	DIA,
+	ANO,
+	MES -- Agrupa todas as transações do mesmo mês/ano
+ORDER BY
+	TOTAL_GASTO DESC -- Ordena pelo total gasto no mês
+LIMIT
+	5;
